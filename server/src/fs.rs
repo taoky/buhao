@@ -198,7 +198,7 @@ pub fn dfs_list(filesystem: &mut Filesystem, dir: &Path) -> Result<Vec<Directory
 
 #[cfg(test)]
 mod test {
-    use std::{io::Write, fs::File, os::unix::fs::symlink};
+    use std::{fs::File, io::Write, os::unix::fs::symlink};
 
     use super::*;
     use test_log::test;
