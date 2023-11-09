@@ -8,8 +8,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-type InodeId = u64;
-const INVALID_PARENT: InodeId = u64::MAX;
+use buhao_library::{Contents, DirectoryContents, DirectoryItem, Inode, InodeId, INVALID_PARENT};
 
 pub struct Filesystem {
     root_path: PathBuf,
@@ -86,54 +85,6 @@ impl Filesystem {
             }
         }
         Ok(inode)
-    }
-}
-
-#[derive(Debug)]
-pub struct DirectoryItem {
-    name: String,
-    inode: InodeId,
-}
-
-#[derive(Debug)]
-pub struct DirectoryContents {
-    parent: InodeId,
-    children: Vec<DirectoryItem>,
-}
-
-#[derive(Debug)]
-pub enum Contents {
-    File,
-    Symlink(String),
-    Directory(DirectoryContents),
-}
-
-#[derive(Debug)]
-pub struct Inode {
-    id: InodeId,
-    mode: u32,
-    uid: u32,
-    gid: u32,
-    nlink: u64,
-    atime: i64,
-    mtime: i64,
-    ctime: i64,
-    contents: Contents,
-}
-
-impl Inode {
-    pub fn new(metadata: std::fs::Metadata, contents: Contents) -> Self {
-        Self {
-            id: metadata.ino(),
-            mode: metadata.mode(),
-            uid: metadata.uid(),
-            gid: metadata.gid(),
-            nlink: metadata.nlink(),
-            atime: metadata.atime(),
-            mtime: metadata.mtime(),
-            ctime: metadata.ctime(),
-            contents,
-        }
     }
 }
 
