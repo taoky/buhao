@@ -8,7 +8,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use buhao_library::{Contents, DirectoryContents, DirectoryItem, Inode, InodeId, INVALID_PARENT};
+use buhao_lib::{Contents, DirectoryContents, DirectoryItem, Inode, InodeId, INVALID_PARENT};
 
 pub struct Filesystem {
     root_path: PathBuf,

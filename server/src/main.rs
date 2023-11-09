@@ -1,4 +1,4 @@
-use buhao_library::{BuhaoCodec, RequestActionType, ResponseActionType};
+use buhao_lib::{BuhaoCodec, RequestActionType, ResponseActionType};
 use tokio_util::codec::Framed;
 use std::{path::Path, sync::{Arc, Mutex}};
 
