@@ -95,15 +95,15 @@ pub fn dfs_list(filesystem: &mut Filesystem, dir: &Path) -> Result<Vec<Directory
     for path in paths {
         let path = match path {
             Ok(path) => path,
-            Err(_) => {
-                warn!("Failed to read directory entry");
+            Err(ref e) => {
+                warn!("Failed to read directory {:?} entry: {}", path, e);
                 continue;
             }
         };
         let metadata = match path.metadata() {
             Ok(metadata) => metadata,
-            Err(_) => {
-                warn!("Failed to read metadata");
+            Err(ref e) => {
+                warn!("Failed to read {:?} metadata: {}", path, e);
                 continue;
             }
         };
@@ -112,8 +112,8 @@ pub fn dfs_list(filesystem: &mut Filesystem, dir: &Path) -> Result<Vec<Directory
             if filetype.is_symlink() {
                 let target = match std::fs::read_link(path.path()) {
                     Ok(target) => target,
-                    Err(_) => {
-                        warn!("Failed to read symlink target");
+                    Err(ref e) => {
+                        warn!("Failed to read symlink {:?} target: {}", path, e);
                         continue;
                     }
                 };
@@ -123,8 +123,8 @@ pub fn dfs_list(filesystem: &mut Filesystem, dir: &Path) -> Result<Vec<Directory
             } else if filetype.is_dir() {
                 let children = match dfs_list(filesystem, path.path().as_path()) {
                     Ok(children) => children,
-                    Err(_) => {
-                        warn!("Failed to read directory contents");
+                    Err(ref e) => {
+                        warn!("Failed to read directory {:?} contents: {}", path, e);
                         continue;
                     }
                 };

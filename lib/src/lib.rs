@@ -1,8 +1,8 @@
-use std::{io, os::unix::prelude::MetadataExt};
 use anyhow::Result;
 use serde::Serialize;
+use std::{io, os::unix::prelude::MetadataExt};
 
-use serde_json::Value;
+use serde_json::{json, Value};
 use tokio_util::{
     bytes::{Buf, BufMut},
     codec::{Decoder, Encoder},
@@ -58,8 +58,8 @@ impl Inode {
         }
     }
 
-    pub fn serialize_metadata(&self) -> Result<Vec<u8>> {
-        Ok(serde_json::to_vec(&self)?)
+    pub fn serialize_metadata(&self) -> Result<Value> {
+        Ok(json!(&self))
     }
 }
 
@@ -83,9 +83,39 @@ impl TryFrom<u8> for RequestActionType {
     }
 }
 
+impl From<RequestActionType> for u8 {
+    fn from(value: RequestActionType) -> Self {
+        match value {
+            RequestActionType::Refresh => 0,
+            RequestActionType::Get => 1,
+        }
+    }
+}
+
+pub fn convert_request_tuple(t: (RequestActionType, Value)) -> (u8, Value) {
+    let (action_type, payload) = t;
+    (action_type.into(), payload)
+}
+
+#[derive(Debug)]
 pub enum ResponseActionType {
     Ok,
     Error,
+}
+
+impl TryFrom<u8> for ResponseActionType {
+    type Error = io::Error;
+
+    fn try_from(value: u8) -> Result<Self, io::Error> {
+        match value {
+            0 => Ok(ResponseActionType::Ok),
+            1 => Ok(ResponseActionType::Error),
+            _ => Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid message type",
+            )),
+        }
+    }
 }
 
 impl From<ResponseActionType> for u8 {
@@ -95,6 +125,11 @@ impl From<ResponseActionType> for u8 {
             ResponseActionType::Error => 1,
         }
     }
+}
+
+pub fn convert_response_tuple(t: (ResponseActionType, Value)) -> (u8, Value) {
+    let (action_type, payload) = t;
+    (action_type.into(), payload)
 }
 
 /// Packet design for requests and responses (which works like <https://i3wm.org/docs/ipc.html>):
@@ -134,12 +169,12 @@ impl Decoder for BuhaoCodec {
     }
 }
 
-impl Encoder<(u8, Vec<u8>)> for BuhaoCodec {
+impl Encoder<(u8, Value)> for BuhaoCodec {
     type Error = io::Error;
 
     fn encode(
         &mut self,
-        item: (u8, Vec<u8>),
+        item: (u8, Value),
         dst: &mut tokio_util::bytes::BytesMut,
     ) -> Result<(), Self::Error> {
         let (message_type, payload) = item;

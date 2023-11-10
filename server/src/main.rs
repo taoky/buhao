@@ -1,8 +1,9 @@
-use buhao_lib::{BuhaoCodec, RequestActionType, ResponseActionType};
+use buhao_lib::{BuhaoCodec, RequestActionType, ResponseActionType, convert_response_tuple};
+use serde_json::json;
 use tokio_util::codec::Framed;
 use std::{path::Path, sync::{Arc, Mutex}};
 
-use log::warn;
+use log::{warn, debug};
 use tokio::net::UnixListener;
 use tokio_stream::StreamExt;
 use futures::sink::SinkExt;
@@ -18,7 +19,7 @@ async fn main() {
     // unlink before bind if possible
     std::fs::remove_file("/tmp/buhao.sock").unwrap_or(());
     let listener = UnixListener::bind("/tmp/buhao.sock").unwrap();
-    let filesystem = Arc::new(Mutex::new(Filesystem::load_from_fs(Path::new("/tmp/buhao"))));
+    let filesystem = Arc::new(Mutex::new(Filesystem::load_from_fs(Path::new("/tmp/"))));
 
     loop {
         match listener.accept().await {
@@ -36,6 +37,7 @@ async fn main() {
                                         unimplemented!("filesystem refresh")
                                     }
                                     Ok(RequestActionType::Get) => {
+                                        debug!("Get request: {}", payload);
                                         let path = payload["path"].as_str().unwrap();
                                         let path = Path::new(path);
                                         let result = {
@@ -44,21 +46,20 @@ async fn main() {
                                         };
                                         let result = match result {
                                             Err(e) => {
-                                                (ResponseActionType::Error, format!("{}", e).as_bytes().to_vec())
+                                                (ResponseActionType::Error, json!(format!("{}", e)))
                                             },
                                             Ok(inode) => {
                                                 match inode.serialize_metadata() {
                                                     Err(e) => {
-                                                        (ResponseActionType::Error, format!("{}", e).as_bytes().to_vec())
+                                                        (ResponseActionType::Error, json!(format!("{}", e)))
                                                     },
                                                     Ok(metadata) => {
-                                                        (ResponseActionType::Ok, metadata.as_slice().to_vec())
+                                                        (ResponseActionType::Ok, metadata)
                                                     }
                                                 }
                                             }
                                         };
-                                        let result: (u8, Vec<u8>) = (result.0.into(), result.1);
-                                        if let Err(e) = framed.send(result).await {
+                                        if let Err(e) = framed.send(convert_response_tuple(result)).await {
                                             warn!("Error sending message: {}", e);
                                         }
                                     }
