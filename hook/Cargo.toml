@@ -6,4 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.75"
+ctor = "0.2.5"
+env_logger = "0.10.1"
+libc = "0.2.150"
+log = "0.4.20"
 redhook = { git = "https://github.com/taoky/redhook.git", rev = "b8ac9e826ab43ea30495cae255103166762e0493" }
+
+[lib]
+name = "buhao_hook"
+crate_type = ["cdylib"]

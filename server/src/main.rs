@@ -1,16 +1,18 @@
-use buhao_lib::{BuhaoCodec, RequestActionType, ResponseActionType, convert_response_tuple};
+use buhao_lib::{convert_response_tuple, BuhaoCodec, RequestActionType, ResponseActionType};
 use serde_json::json;
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 use tokio_util::codec::Framed;
-use std::{path::Path, sync::{Arc, Mutex}};
 
-use log::{warn, debug};
+use futures::sink::SinkExt;
+use log::{debug, warn};
 use tokio::net::UnixListener;
 use tokio_stream::StreamExt;
-use futures::sink::SinkExt;
 
 mod fs;
 use fs::Filesystem;
-
 
 #[tokio::main]
 async fn main() {
@@ -47,19 +49,18 @@ async fn main() {
                                         let result = match result {
                                             Err(e) => {
                                                 (ResponseActionType::Error, json!(format!("{}", e)))
-                                            },
-                                            Ok(inode) => {
-                                                match inode.serialize_metadata() {
-                                                    Err(e) => {
-                                                        (ResponseActionType::Error, json!(format!("{}", e)))
-                                                    },
-                                                    Ok(metadata) => {
-                                                        (ResponseActionType::Ok, metadata)
-                                                    }
-                                                }
                                             }
+                                            Ok(inode) => match inode.serialize_metadata() {
+                                                Err(e) => (
+                                                    ResponseActionType::Error,
+                                                    json!(format!("{}", e)),
+                                                ),
+                                                Ok(metadata) => (ResponseActionType::Ok, metadata),
+                                            },
                                         };
-                                        if let Err(e) = framed.send(convert_response_tuple(result)).await {
+                                        if let Err(e) =
+                                            framed.send(convert_response_tuple(result)).await
+                                        {
                                             warn!("Error sending message: {}", e);
                                         }
                                     }
@@ -72,7 +73,6 @@ async fn main() {
                                 warn!("Error decoding message: {}", e);
                             }
                         }
-                        
                     }
                 });
             }
