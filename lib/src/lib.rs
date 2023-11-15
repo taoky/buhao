@@ -8,6 +8,8 @@ use tokio_util::{
     codec::{Decoder, Encoder},
 };
 
+pub mod syncframed;
+
 pub type InodeId = u64;
 pub const INVALID_PARENT: InodeId = u64::MAX;
 
@@ -92,7 +94,7 @@ impl From<RequestActionType> for u8 {
     }
 }
 
-pub fn convert_request_tuple(t: (RequestActionType, Value)) -> (u8, Value) {
+pub fn convert_request_tuple(t: (RequestActionType, Value)) -> Item {
     let (action_type, payload) = t;
     (action_type.into(), payload)
 }
@@ -127,7 +129,7 @@ impl From<ResponseActionType> for u8 {
     }
 }
 
-pub fn convert_response_tuple(t: (ResponseActionType, Value)) -> (u8, Value) {
+pub fn convert_response_tuple(t: (ResponseActionType, Value)) -> Item {
     let (action_type, payload) = t;
     (action_type.into(), payload)
 }
@@ -135,9 +137,10 @@ pub fn convert_response_tuple(t: (ResponseActionType, Value)) -> (u8, Value) {
 /// Packet design for requests and responses (which works like <https://i3wm.org/docs/ipc.html>):
 /// "buhao"<json payload len (u32)><message type (u8)><json payload>
 pub struct BuhaoCodec;
+pub type Item = (u8, Value);
 
 impl Decoder for BuhaoCodec {
-    type Item = (u8, Value);
+    type Item = crate::Item;
     type Error = io::Error;
 
     fn decode(
@@ -169,12 +172,12 @@ impl Decoder for BuhaoCodec {
     }
 }
 
-impl Encoder<(u8, Value)> for BuhaoCodec {
+impl Encoder<Item> for BuhaoCodec {
     type Error = io::Error;
 
     fn encode(
         &mut self,
-        item: (u8, Value),
+        item: Item,
         dst: &mut tokio_util::bytes::BytesMut,
     ) -> Result<(), Self::Error> {
         let (message_type, payload) = item;
