@@ -1,6 +1,6 @@
 use std::os::unix::net::UnixStream;
 
-use buhao_lib::{BuhaoCodec, Item};
+use buhao_lib::{BuhaoCodec, Item, BUHAO_SOCK_PATH};
 use buhao_lib::syncframed::SyncFramed;
 
 thread_local! {
@@ -15,9 +15,16 @@ pub struct Manager {
 impl Manager {
     fn init(&mut self) {
         if self.framed.is_none() {
-            let stream = UnixStream::connect("/tmp/buhao.sock").unwrap();
+            let stream = UnixStream::connect(BUHAO_SOCK_PATH).unwrap();
             let codec = BuhaoCodec;
             self.framed = Some(SyncFramed::new(stream, codec));
         }
+    }
+
+    fn interact(&mut self, item: Item) -> Option<Item> {
+        self.init();
+        let framed = self.framed.as_mut().unwrap();
+        framed.send(item).unwrap();
+        framed.next().unwrap()
     }
 }

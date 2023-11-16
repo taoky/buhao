@@ -1,4 +1,4 @@
-use buhao_lib::{convert_response_tuple, BuhaoCodec, RequestActionType, ResponseActionType};
+use buhao_lib::{convert_response_tuple, BuhaoCodec, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH};
 use serde_json::json;
 use std::{
     path::Path,
@@ -19,8 +19,8 @@ async fn main() {
     // init logger
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     // unlink before bind if possible
-    std::fs::remove_file("/tmp/buhao.sock").unwrap_or(());
-    let listener = UnixListener::bind("/tmp/buhao.sock").unwrap();
+    std::fs::remove_file(BUHAO_SOCK_PATH).unwrap_or(());
+    let listener = UnixListener::bind(BUHAO_SOCK_PATH).unwrap();
     let filesystem = Arc::new(Mutex::new(Filesystem::load_from_fs(Path::new("/tmp/"))));
 
     loop {

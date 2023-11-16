@@ -6,11 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.72"
-log = "0.4.17"
-serde = { version = "1.0.192", features = ["derive"] }
-serde_json = "1.0.108"
-tokio-util = { version = "0.7.10", features = ["codec"] }
+anyhow = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio-util = { workspace = true }
 
 [dev-dependencies]
 test-log = "0.2.11"

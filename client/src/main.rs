@@ -4,7 +4,7 @@ use log::{error, info};
 use serde_json::json;
 use tokio::net::UnixStream;
 
-use buhao_lib::{BuhaoCodec, ResponseActionType};
+use buhao_lib::{BuhaoCodec, ResponseActionType, BUHAO_SOCK_PATH};
 use futures::prelude::*;
 use tokio_util::codec::Framed;
 
@@ -13,7 +13,7 @@ async fn main() {
     // init logger
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    let stream = UnixStream::connect("/tmp/buhao.sock").await.unwrap();
+    let stream = UnixStream::connect(BUHAO_SOCK_PATH).await.unwrap();
     let (mut writer, mut reader) = Framed::new(stream, BuhaoCodec).split();
 
     loop {

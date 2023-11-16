@@ -10,6 +10,8 @@ use tokio_util::{
 
 pub mod syncframed;
 
+pub const BUHAO_SOCK_PATH: &str = "/tmp/buhao.sock";
+
 pub type InodeId = u64;
 pub const INVALID_PARENT: InodeId = u64::MAX;
 
