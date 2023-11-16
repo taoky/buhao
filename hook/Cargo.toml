@@ -13,6 +13,7 @@ libc = "0.2.150"
 log = { workspace = true }
 redhook = { git = "https://github.com/taoky/redhook.git", rev = "b8ac9e826ab43ea30495cae255103166762e0493" }
 buhao_lib = { path = "../lib" }
+serde_json = { workspace = true }
 
 [lib]
 name = "buhao_hook"

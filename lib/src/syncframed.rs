@@ -28,17 +28,21 @@ where
         Ok(())
     }
 
-    pub fn next(&mut self) -> Result<Option<U::Item>, std::io::Error> {
+    pub fn recv(&mut self) -> Result<U::Item, std::io::Error> {
         let mut buf = BytesMut::new();
-        self.inner.read_to_end(&mut buf.to_vec())?;
-        if buf.is_empty() {
-            return Ok(None);
+        loop {
+            let mut inner_buf = [0; 1024];
+            let n = self.inner.read(&mut inner_buf)?;
+            // can it be decoded?
+            buf.extend_from_slice(&inner_buf[..n]);
+            if let Some(item) = self
+                .codec
+                .decode(&mut buf)
+                .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "failed to decode"))?
+            {
+                return Ok(item);
+            }
         }
-        let item = self
-            .codec
-            .decode(&mut buf)
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "failed to decode"))?;
-        Ok(item)
     }
 }
 
@@ -55,7 +59,7 @@ mod tests {
         let stream = TcpStream::connect("localhost:8000").unwrap();
         let mut _framed = SyncFramed::new(stream, codec);
         _framed.send("hello".into()).unwrap();
-        let _item = _framed.next().unwrap();
+        let _item = _framed.recv().unwrap();
         println!("{:?}", _item);
     }
 }

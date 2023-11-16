@@ -1,4 +1,6 @@
-use buhao_lib::{convert_response_tuple, BuhaoCodec, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH};
+use buhao_lib::{
+    convert_response_tuple, BuhaoCodec, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH,
+};
 use serde_json::json;
 use std::{
     path::Path,

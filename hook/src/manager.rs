@@ -1,30 +1,36 @@
+use std::cell::RefCell;
 use std::os::unix::net::UnixStream;
 
-use buhao_lib::{BuhaoCodec, Item, BUHAO_SOCK_PATH};
 use buhao_lib::syncframed::SyncFramed;
+use buhao_lib::{BuhaoCodec, Item, RequestActionType, BUHAO_SOCK_PATH};
+use serde_json::json;
 
 thread_local! {
-    static MANAGER: Manager = Manager::default();
+    pub static MANAGER: RefCell<Manager> = RefCell::new(Manager::default());
 }
 
-#[derive(Default)]
 pub struct Manager {
-    framed: Option<SyncFramed<UnixStream, BuhaoCodec, Item>>,
+    framed: SyncFramed<UnixStream, BuhaoCodec, Item>,
+}
+
+impl Default for Manager {
+    fn default() -> Self {
+        let stream = UnixStream::connect(BUHAO_SOCK_PATH).unwrap();
+        let codec = BuhaoCodec;
+        Self {
+            framed: SyncFramed::new(stream, codec),
+        }
+    }
 }
 
 impl Manager {
-    fn init(&mut self) {
-        if self.framed.is_none() {
-            let stream = UnixStream::connect(BUHAO_SOCK_PATH).unwrap();
-            let codec = BuhaoCodec;
-            self.framed = Some(SyncFramed::new(stream, codec));
-        }
+    pub fn interact(&mut self, item: Item) -> Item {
+        self.framed.send(item).unwrap();
+        self.framed.recv().unwrap()
     }
 
-    fn interact(&mut self, item: Item) -> Option<Item> {
-        self.init();
-        let framed = self.framed.as_mut().unwrap();
-        framed.send(item).unwrap();
-        framed.next().unwrap()
+    pub fn open(&mut self, path: &str) -> Item {
+        let item = (RequestActionType::Get.into(), json!({"path": path}));
+        self.interact(item)
     }
 }

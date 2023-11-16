@@ -1,5 +1,5 @@
 /// Open files and directories.
-use crate::utils::get_path;
+use crate::{manager::MANAGER, utils::get_path};
 use anyhow::Result;
 use log::{info, warn};
 use redhook::hook;
@@ -14,7 +14,21 @@ unsafe fn open_hook(ptr: *const c_char, oflag: i32, mode: u32) -> Result<i32> {
         }
     };
     info!("open: {}, {}, {}", path, oflag, mode);
+    info!("{:?}", open!(path.as_str()));
     Ok(redhook::real!(open)(ptr, oflag, mode))
+}
+
+unsafe fn opendir_hook(dirptr: *const c_char) -> Result<*mut libc::DIR> {
+    let path = match get_path(dirptr) {
+        Ok(s) => s,
+        Err(e) => {
+            warn!("opendir_hook: invalid path ({})", e);
+            return Err(e);
+        }
+    };
+    info!("opendir: {}", path);
+    info!("{:?}", open!(path.as_str()));
+    Ok(redhook::real!(opendir)(dirptr))
 }
 
 hook! {
@@ -57,15 +71,10 @@ hook! {
 
 hook! {
     unsafe fn opendir(dirptr: *const c_char) -> *mut libc::DIR => my_opendir {
-        let path = match get_path(dirptr) {
-            Ok(s) => s,
-            Err(e) => {
-                warn!("opendir_hook: invalid path ({})", e);
-                return redhook::real!(opendir)(dirptr);
-            }
-        };
-        info!("opendir: {}", path);
-        redhook::real!(opendir)(dirptr)
+        match opendir_hook(dirptr) {
+            Err(_) => redhook::real!(opendir)(dirptr),
+            Ok(fd) => fd,
+        }
     }
 }
 
