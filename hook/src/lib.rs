@@ -19,11 +19,7 @@ macro_rules! open {
     ($path: expr) => {
         {
             let path = &$crate::construct_absoulte_path($path)?;
-            // TODO: get managed path from server
-            if !path.starts_with("/tmp") {
-                return Err(std::io::Error::new(std::io::ErrorKind::Other, "not managed path").into());
-            }
-            MANAGER.with(|m| m.borrow_mut().open(path))
+            $crate::manager::MANAGER.with(|m| m.borrow_mut().open(path))
         }
     };
 }

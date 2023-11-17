@@ -67,6 +67,7 @@ impl Inode {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum RequestActionType {
     Refresh,
     Get,
@@ -96,12 +97,18 @@ impl From<RequestActionType> for u8 {
     }
 }
 
+impl PartialEq<RequestActionType> for u8 {
+    fn eq(&self, other: &RequestActionType) -> bool {
+        *self == Into::<u8>::into(*other)
+    }
+}
+
 pub fn convert_request_tuple(t: (RequestActionType, Value)) -> Item {
     let (action_type, payload) = t;
     (action_type.into(), payload)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ResponseActionType {
     Ok,
     Error,
@@ -128,6 +135,12 @@ impl From<ResponseActionType> for u8 {
             ResponseActionType::Ok => 0,
             ResponseActionType::Error => 1,
         }
+    }
+}
+
+impl PartialEq<ResponseActionType> for u8 {
+    fn eq(&self, other: &ResponseActionType) -> bool {
+        *self == Into::<u8>::into(*other)
     }
 }
 

@@ -3,9 +3,9 @@ use log::{info, warn};
 use redhook::hook;
 use std::ffi::c_char;
 
-use crate::{utils::get_path, manager::MANAGER};
+use crate::utils::get_path;
 
-unsafe fn stat_hook(ptr: *const c_char, buf: *mut libc::stat, use_lstat: bool) -> Result<i32> {
+fn stat_hook(ptr: *const c_char, buf: *mut libc::stat, use_lstat: bool) -> Result<i32> {
     let path = match get_path(ptr) {
         Ok(s) => s,
         Err(e) => {
@@ -16,13 +16,13 @@ unsafe fn stat_hook(ptr: *const c_char, buf: *mut libc::stat, use_lstat: bool) -
     info!("stat: {}", path);
     info!("{:?}", open!(path.as_str()));
     if !use_lstat {
-        Ok(redhook::real!(stat)(ptr, buf))
+        Ok(unsafe { redhook::real!(stat)(ptr, buf) })
     } else {
-        Ok(redhook::real!(lstat)(ptr, buf))
+        Ok(unsafe { redhook::real!(lstat)(ptr, buf) })
     }
 }
 
-unsafe fn stat64_hook(ptr: *const c_char, buf: *mut libc::stat64, use_lstat: bool) -> Result<i32> {
+fn stat64_hook(ptr: *const c_char, buf: *mut libc::stat64, use_lstat: bool) -> Result<i32> {
     let path = match get_path(ptr) {
         Ok(s) => s,
         Err(e) => {
@@ -32,9 +32,9 @@ unsafe fn stat64_hook(ptr: *const c_char, buf: *mut libc::stat64, use_lstat: boo
     };
     info!("stat64: {}", path);
     if !use_lstat {
-        Ok(redhook::real!(stat64)(ptr, buf))
+        Ok(unsafe { redhook::real!(stat64)(ptr, buf) })
     } else {
-        Ok(redhook::real!(lstat64)(ptr, buf))
+        Ok(unsafe { redhook::real!(lstat64)(ptr, buf) })
     }
 }
 
