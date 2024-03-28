@@ -1,10 +1,11 @@
-use std::ffi::c_char;
 use anyhow::Result;
 use log::{info, warn};
 use redhook::hook;
+use std::ffi::c_char;
 
 use crate::utils::get_path;
 
+// TODO: stub
 fn opendir_hook(dirptr: *const c_char) -> Result<*mut libc::DIR> {
     let path = match get_path(dirptr) {
         Ok(s) => s,
@@ -28,6 +29,7 @@ hook! {
 }
 
 hook! {
+    // TODO: stub
     unsafe fn readdir(dirp: *mut libc::DIR) -> *mut libc::dirent => my_readdir {
         let entry = redhook::real!(readdir)(dirp);
         if entry.is_null() {
@@ -40,6 +42,7 @@ hook! {
 }
 
 hook! {
+    // TODO: stub
     unsafe fn readdir64(dirp: *mut libc::DIR) -> *mut libc::dirent64 => my_readdir64 {
         let entry = redhook::real!(readdir64)(dirp);
         if entry.is_null() {

@@ -5,6 +5,7 @@ use log::{info, warn};
 use redhook::hook;
 use std::ffi::c_char;
 
+// TODO
 fn open_hook(ptr: *const c_char, oflag: i32, mode: u32) -> Result<i32> {
     let path = match get_path(ptr) {
         Ok(s) => s,
@@ -57,6 +58,7 @@ hook! {
 }
 
 hook! {
+    // TODO: stub
     unsafe fn fdopendir(fd: i32) -> *mut libc::DIR => my_fdopendir {
         info!("fdopendir: {}", fd);
         redhook::real!(fdopendir)(fd)

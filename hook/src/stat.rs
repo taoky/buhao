@@ -5,6 +5,7 @@ use std::ffi::c_char;
 
 use crate::utils::get_path;
 
+// TODO
 fn stat_hook(ptr: *const c_char, buf: *mut libc::stat, use_lstat: bool) -> Result<i32> {
     let path = match get_path(ptr) {
         Ok(s) => s,
@@ -22,6 +23,7 @@ fn stat_hook(ptr: *const c_char, buf: *mut libc::stat, use_lstat: bool) -> Resul
     }
 }
 
+// TODO
 fn stat64_hook(ptr: *const c_char, buf: *mut libc::stat64, use_lstat: bool) -> Result<i32> {
     let path = match get_path(ptr) {
         Ok(s) => s,
@@ -57,6 +59,7 @@ hook! {
 }
 
 hook! {
+    // TODO: stub
     unsafe fn fstat(fd: i32, buf: *mut libc::stat) -> i32 => my_fstat {
         info!("fstat: {}", fd);
         redhook::real!(fstat)(fd, buf)
@@ -64,6 +67,7 @@ hook! {
 }
 
 hook! {
+    // TODO: stub
     unsafe fn fstat64(fd: i32, buf: *mut libc::stat64) -> i32 => my_fstat64 {
         info!("fstat64: {}", fd);
         redhook::real!(fstat64)(fd, buf)

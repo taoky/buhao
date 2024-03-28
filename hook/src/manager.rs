@@ -2,10 +2,12 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::os::unix::net::UnixStream;
 
-use buhao_lib::syncframed::SyncFramed;
-use buhao_lib::{BuhaoCodec, Item, RequestActionType, BUHAO_SOCK_PATH, DirectoryContents, ResponseActionType};
-use serde_json::json;
 use anyhow::Result;
+use buhao_lib::syncframed::SyncFramed;
+use buhao_lib::{
+    BuhaoCodec, DirectoryContents, Item, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH,
+};
+use serde_json::json;
 
 thread_local! {
     pub static MANAGER: RefCell<Manager> = RefCell::new(Manager::default());
@@ -13,7 +15,7 @@ thread_local! {
 
 pub struct HookDir {
     path: String,
-    contents: DirectoryContents
+    contents: DirectoryContents,
 }
 
 pub struct Manager {
