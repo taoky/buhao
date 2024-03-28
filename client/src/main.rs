@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::{io::{self, Write}, process::exit};
 
 use log::{error, info};
 use serde_json::json;
@@ -18,6 +18,8 @@ async fn main() {
 
     loop {
         let mut input = String::new();
+        print!("> ");
+        io::stdout().flush().unwrap();
         std::io::stdin().read_line(&mut input).unwrap();
         let input = input.trim();
         let (command, args) = input.split_once(' ').unwrap_or((input, ""));
@@ -39,6 +41,10 @@ async fn main() {
             }
             "refresh" => {
                 unimplemented!("refresh")
+            }
+            "help" => {
+                println!("Available commands: get <path>, refresh, help, exit");
+                false
             }
             _ => {
                 error!("Unknown command: {}", command);

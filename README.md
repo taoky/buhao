@@ -14,3 +14,24 @@ Client: A standalone program that directly interacts with the server.
 Server: A daemon that runs on the server side, maintains database, and provides metadata to clients through UNIX socket.
 
 Lib: Shared code.
+
+## Testdrive
+
+Run server:
+
+```console
+cargo run --bin buhao_server
+```
+
+Run testing client:
+
+```console
+cargo run --bin buhao_client
+```
+
+Run testing hook:
+
+```console
+$ cargo build --lib
+$ LD_PRELOAD=./target/debug/libbuhao_hook.so rsync /tmp/
+```
