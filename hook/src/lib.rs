@@ -15,10 +15,10 @@ pub fn construct_absoulte_path(path: &str) -> Result<String, std::io::Error> {
     }
 }
 
-macro_rules! open {
+macro_rules! get {
     ($path: expr) => {{
         let path = &$crate::construct_absoulte_path($path)?;
-        $crate::manager::MANAGER.with(|m| m.borrow_mut().open(path))
+        $crate::manager::MANAGER.with(|m| m.borrow_mut().get(path))
     }};
 }
 

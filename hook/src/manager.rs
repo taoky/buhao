@@ -5,7 +5,7 @@ use std::os::unix::net::UnixStream;
 use anyhow::Result;
 use buhao_lib::syncframed::SyncFramed;
 use buhao_lib::{
-    BuhaoCodec, DirectoryContents, Item, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH,
+    BuhaoCodec, DirectoryContents, Inode, Item, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH
 };
 use serde_json::json;
 
@@ -53,30 +53,30 @@ impl Manager {
 
     pub fn is_managed(&self, path: &str) -> bool {
         // TODO: get managed path from server
-        path.starts_with("/tmp/buhao/")
+        path.starts_with("/tmp/buhao/") || path == "/tmp/buhao"
     }
 
     /// Get file info from remote server
-    pub fn open(&mut self, path: &str) -> Result<Item> {
+    pub fn get(&mut self, path: &str) -> Result<Inode> {
         check_managed!(self, path);
         let item = (RequestActionType::Get.into(), json!({"path": path}));
-        Ok(self.interact(item))
+        Ok(serde_json::from_value(self.interact(item).1)?)
     }
 
-    pub fn opendir(&mut self, path: &str) -> Result<Item> {
-        check_managed!(self, path);
-        let item = (RequestActionType::Get.into(), json!({"path": path}));
-        let item = self.interact(item);
-        if item.0 == ResponseActionType::Ok {
-            let dir_id = item.1["dir_id"].as_u64().unwrap();
-            self.allocated_dir.insert(dir_id);
-            // WIP
-            // self.dir_map.insert(dir_id, HookDir {
-            //     path: path.to_string(),
-            //     contents: serde_json::from_value(item.1["contents"].clone()).unwrap()
-            // });
-        }
+    // pub fn opendir(&mut self, path: &str) -> Result<Item> {
+    //     check_managed!(self, path);
+    //     let item = (RequestActionType::Get.into(), json!({"path": path}));
+    //     let item = self.interact(item);
+    //     if item.0 == ResponseActionType::Ok {
+    //         let dir_id = item.1["dir_id"].as_u64().unwrap();
+    //         self.allocated_dir.insert(dir_id);
+    //         // WIP
+    //         // self.dir_map.insert(dir_id, HookDir {
+    //         //     path: path.to_string(),
+    //         //     contents: serde_json::from_value(item.1["contents"].clone()).unwrap()
+    //         // });
+    //     }
 
-        unimplemented!()
-    }
+    //     unimplemented!()
+    // }
 }

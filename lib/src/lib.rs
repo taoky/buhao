@@ -1,5 +1,5 @@
 use anyhow::Result;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{io, os::unix::prelude::MetadataExt};
 
 use serde_json::{json, Value};
@@ -15,26 +15,26 @@ pub const BUHAO_SOCK_PATH: &str = "/tmp/buhao.sock";
 pub type InodeId = u64;
 pub const INVALID_PARENT: InodeId = u64::MAX;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DirectoryItem {
     pub name: String,
     pub inode: InodeId,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DirectoryContents {
     pub parent: InodeId,
     pub children: Vec<DirectoryItem>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Contents {
     File,
     Symlink(String),
     Directory(DirectoryContents),
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Inode {
     pub id: InodeId,
     pub mode: u32,
@@ -44,6 +44,7 @@ pub struct Inode {
     pub atime: i64,
     pub mtime: i64,
     pub ctime: i64,
+    pub size: i64,
     pub contents: Contents,
 }
 
@@ -58,6 +59,7 @@ impl Inode {
             atime: metadata.atime(),
             mtime: metadata.mtime(),
             ctime: metadata.ctime(),
+            size: metadata.size() as i64,
             contents,
         }
     }

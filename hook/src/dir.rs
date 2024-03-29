@@ -14,8 +14,8 @@ fn opendir_hook(dirptr: *const c_char) -> Result<*mut libc::DIR> {
             return Err(e);
         }
     };
-    info!("opendir: {}", path);
-    info!("{:?}", open!(path.as_str()));
+    info!("opendir (stub): {}", path);
+    info!("{:?}", get!(path.as_str()));
     Ok(unsafe { redhook::real!(opendir)(dirptr) })
 }
 
@@ -36,7 +36,7 @@ hook! {
             return entry;
         }
         let name = std::ffi::CStr::from_ptr((*entry).d_name.as_ptr()).to_str().unwrap();
-        info!("readdir: {}", name);
+        info!("readdir (stub): {}", name);
         entry
     }
 }
@@ -49,7 +49,7 @@ hook! {
             return entry;
         }
         let name = std::ffi::CStr::from_ptr((*entry).d_name.as_ptr()).to_str().unwrap();
-        info!("readdir64: {}", name);
+        info!("readdir64 (stub): {}", name);
         entry
     }
 }
