@@ -33,5 +33,5 @@ Run testing hook:
 
 ```console
 $ cargo build --lib
-$ LD_PRELOAD=./target/debug/libbuhao_hook.so rsync /tmp/
+$ LD_PRELOAD=./target/debug/libbuhao_hook.so rsync --daemon --no-detach --config=assets/rsyncd-test.conf
 ```

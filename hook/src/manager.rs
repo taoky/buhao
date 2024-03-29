@@ -53,9 +53,10 @@ impl Manager {
 
     pub fn is_managed(&self, path: &str) -> bool {
         // TODO: get managed path from server
-        path.starts_with("/tmp")
+        path.starts_with("/tmp/buhao/")
     }
 
+    /// Get file info from remote server
     pub fn open(&mut self, path: &str) -> Result<Item> {
         check_managed!(self, path);
         let item = (RequestActionType::Get.into(), json!({"path": path}));
