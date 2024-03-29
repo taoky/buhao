@@ -5,7 +5,7 @@ use log::{info, warn};
 use redhook::hook;
 use std::ffi::c_char;
 
-use crate::get_path;
+use crate::{get_path, manager::ShadowFd};
 
 const RECURSIVE_LIMIT: usize = 10;
 
@@ -134,10 +134,21 @@ hook! {
 }
 
 hook! {
-    // TODO: stub
     unsafe fn fstat(fd: i32, buf: *mut libc::stat) -> i32 => my_fstat {
-        info!("fstat (stub): {}", fd);
-        redhook::real!(fstat)(fd, buf)
+        if fd < crate::LOWER_FD_BOUND {
+            return redhook::real!(fstat)(fd, buf);
+        }
+        info!("fstat: {}", fd);
+        let info: ShadowFd = match retrieve_fd!(fd as u64) {
+            Some(info) => info,
+            None => {
+                warn!("fstat: invalid fd");
+                return -1;
+            }
+        };
+        let inode = info.info;
+        inode_to_stat!(inode, buf);
+        0
     }
 }
 
