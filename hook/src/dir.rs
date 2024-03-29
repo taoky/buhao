@@ -72,7 +72,12 @@ hook! {
                 return null_mut();
             }
         };
-        // let dirent_item = info.info.contents.get(dirent_idx);
+
+        if dirent.name.len() >= 256 {
+            warn!("readdir: name too long");
+            set_errno_code(libc::ENAMETOOLONG);
+            return null_mut();
+        }
         // sorry but I don't know how not to let it leak
         let res = libc::malloc(std::mem::size_of::<libc::dirent>()) as *mut libc::dirent;
         (*res).d_ino = dirent.inode;
@@ -83,6 +88,10 @@ hook! {
             InodeType::File => libc::DT_REG,
             InodeType::Symlink => libc::DT_LNK,
         };
+        // Copy string as CString to d_name
+        let name = std::ffi::CString::new(dirent.name.clone()).unwrap();
+        // SAFE: d_name is a 256-byte buffer
+        std::ptr::copy_nonoverlapping(name.as_ptr(), (*res).d_name.as_mut_ptr(), dirent.name.len());
         set_dirstate!(dirp as u64, DirState { idx: idx + 1 });
         res
     }
