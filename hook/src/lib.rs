@@ -68,6 +68,12 @@ macro_rules! retrieve_fd {
     };
 }
 
+macro_rules! close {
+    ($fd: expr, $dirop: expr) => {
+        $crate::manager::MANAGER.with(|m| m.borrow_mut().close($fd, $dirop))
+    };
+}
+
 const LOWER_FD_BOUND: u64 = 0x0000800000000000;
 
 mod dir;

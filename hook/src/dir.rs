@@ -103,3 +103,22 @@ hook! {
         entry
     }
 }
+
+hook! {
+    unsafe fn closedir(dirp: *mut libc::DIR) -> i32 => my_closedir {
+        if (dirp as u64) < crate::LOWER_FD_BOUND {
+            return redhook::real!(closedir)(dirp);
+        }
+        let info: ShadowFd = match retrieve_fd!(dirp as u64) {
+            Some(info) => info,
+            None => {
+                warn!("closedir: invalid libc::DIR");
+                set_errno_code(libc::EBADF);
+                return -1;
+            }
+        };
+        info!("closedir: {:?}", info);
+        close!(dirp as u64, true);
+        0
+    }
+}

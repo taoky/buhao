@@ -103,6 +103,13 @@ impl Manager {
         Ok(self.next_fd - 1)
     }
 
+    pub fn close(&mut self, fd: u64, dir_op: bool) {
+        if dir_op {
+            self.unregister_dir(fd);
+        }
+        self.fd_map.remove(&fd);
+    }
+
     fn register_dir(&mut self, fd: u64) {
         self.dir_state.insert(fd, DirState { idx: 0 });
     }
