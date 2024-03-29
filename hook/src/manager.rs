@@ -9,7 +9,7 @@ use buhao_lib::{
 };
 use serde_json::json;
 
-use crate::LOWER_FD_BOUND;
+use crate::{LOWER_DIRFD_BOUND, LOWER_FD_BOUND};
 
 thread_local! {
     pub static MANAGER: RefCell<Manager> = RefCell::new(Manager::default());
@@ -17,7 +17,7 @@ thread_local! {
 
 #[derive(Debug, Clone)]
 pub struct ShadowFd {
-    path: String,
+    pub path: String,
     real_fd: Option<i32>,
     pub info: Inode,
 }
@@ -31,7 +31,8 @@ pub struct DirState {
 pub struct Manager {
     framed: SyncFramed<UnixStream, BuhaoCodec, Item>,
     fd_map: HashMap<u64, ShadowFd>,
-    next_fd: u64,
+    next_fd: i32,
+    next_dirfd: u64,
     dir_state: HashMap<u64, DirState>,
 }
 
@@ -43,6 +44,7 @@ impl Default for Manager {
             framed: SyncFramed::new(stream, codec),
             fd_map: HashMap::new(),
             next_fd: LOWER_FD_BOUND,
+            next_dirfd: LOWER_DIRFD_BOUND,
             dir_state: HashMap::new(),
         }
     }
@@ -95,12 +97,17 @@ impl Manager {
             real_fd: None,
             info: inode,
         };
-        self.fd_map.insert(self.next_fd, shadow_fd);
+
         if dir_op {
-            self.register_dir(self.next_fd);
+            self.fd_map.insert(self.next_dirfd, shadow_fd);
+            self.register_dir(self.next_dirfd);
+            self.next_dirfd += 1;
+            Ok(self.next_dirfd - 1)
+        } else {
+            self.fd_map.insert(self.next_fd as u64, shadow_fd);
+            self.next_fd += 1;
+            Ok(self.next_fd as u64 - 1)
         }
-        self.next_fd += 1;
-        Ok(self.next_fd - 1)
     }
 
     pub fn close(&mut self, fd: u64, dir_op: bool) {

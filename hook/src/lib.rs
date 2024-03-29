@@ -74,7 +74,8 @@ macro_rules! close {
     };
 }
 
-const LOWER_FD_BOUND: u64 = 0x0000800000000000;
+const LOWER_DIRFD_BOUND: u64 = 0x0000800000000000;
+const LOWER_FD_BOUND: i32 = 0x00800000;
 
 mod dir;
 mod manager;

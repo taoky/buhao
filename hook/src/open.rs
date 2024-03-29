@@ -64,3 +64,10 @@ hook! {
         redhook::real!(fdopendir)(fd)
     }
 }
+
+hook! {
+    unsafe fn close(fd: i32) -> i32 => my_close {
+        info!("close: {}", fd);
+        redhook::real!(close)(fd)
+    }
+}

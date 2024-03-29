@@ -36,7 +36,7 @@ hook! {
 hook! {
     // TODO: stub
     unsafe fn readdir(dirp: *mut libc::DIR) -> *mut libc::dirent => my_readdir {
-        if (dirp as u64) < crate::LOWER_FD_BOUND {
+        if (dirp as u64) < crate::LOWER_DIRFD_BOUND {
             return redhook::real!(readdir)(dirp);
         }
         let info: ShadowFd = match retrieve_fd!(dirp as u64) {
@@ -47,7 +47,7 @@ hook! {
                 return null_mut();
             }
         };
-        info!("readdir: {:?}", info);
+        info!("readdir: {:?}", info.path);
         let state: DirState = match get_dirstate!(dirp as u64) {
             Some(dirent) => dirent,
             None => {
@@ -78,6 +78,7 @@ hook! {
             set_errno_code(libc::ENAMETOOLONG);
             return null_mut();
         }
+        info!("readdir item: {}", dirent.name);
         // sorry but I don't know how not to let it leak
         let res = libc::malloc(std::mem::size_of::<libc::dirent>()) as *mut libc::dirent;
         (*res).d_ino = dirent.inode;
@@ -91,7 +92,7 @@ hook! {
         // Copy string as CString to d_name
         let name = std::ffi::CString::new(dirent.name.clone()).unwrap();
         // SAFE: d_name is a 256-byte buffer
-        std::ptr::copy_nonoverlapping(name.as_ptr(), (*res).d_name.as_mut_ptr(), dirent.name.len());
+        std::ptr::copy_nonoverlapping(name.as_ptr(), (*res).d_name.as_mut_ptr(), dirent.name.len() + 1);
         set_dirstate!(dirp as u64, DirState { idx: idx + 1 });
         res
     }
@@ -100,7 +101,7 @@ hook! {
 hook! {
     // TODO: stub
     unsafe fn readdir64(dirp: *mut libc::DIR) -> *mut libc::dirent64 => my_readdir64 {
-        if (dirp as u64) < crate::LOWER_FD_BOUND {
+        if (dirp as u64) < crate::LOWER_DIRFD_BOUND {
             return redhook::real!(readdir64)(dirp);
         }
         let entry = redhook::real!(readdir64)(dirp);
@@ -115,7 +116,7 @@ hook! {
 
 hook! {
     unsafe fn closedir(dirp: *mut libc::DIR) -> i32 => my_closedir {
-        if (dirp as u64) < crate::LOWER_FD_BOUND {
+        if (dirp as u64) < crate::LOWER_DIRFD_BOUND {
             return redhook::real!(closedir)(dirp);
         }
         let info: ShadowFd = match retrieve_fd!(dirp as u64) {

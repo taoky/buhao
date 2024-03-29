@@ -35,3 +35,9 @@ Run testing hook:
 $ cargo build --lib
 $ LD_PRELOAD=./target/debug/libbuhao_hook.so rsync --daemon --no-detach --config=assets/rsyncd-test.conf
 ```
+
+Debugging:
+
+```console
+$ sudo strace -s 65535 -f -p $(pidof rsync)  # show full syscall arguments
+```
