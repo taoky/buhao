@@ -57,7 +57,7 @@ fn stat_hook(
             return Err(e);
         }
     };
-    info!("stat: {}", path);
+    info!("stat: {} (lstat: {})", path, use_lstat);
     let resp: Inode = get!(path.as_str())?;
     info!("{:?}", resp);
     let is_symlink = match resp.contents {
@@ -98,7 +98,7 @@ fn stat64_hook(
             return Err(e);
         }
     };
-    info!("stat64: {}", path);
+    info!("stat64: {} (lstat64: {})", path, use_lstat);
     let resp: Inode = get!(path.as_str())?;
     info!("{:?}", resp);
     let is_symlink = match resp.contents {

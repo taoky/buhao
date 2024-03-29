@@ -5,7 +5,8 @@ use std::os::unix::net::UnixStream;
 use anyhow::Result;
 use buhao_lib::syncframed::SyncFramed;
 use buhao_lib::{
-    BuhaoCodec, DirectoryContents, Inode, Item, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH
+    BuhaoCodec, DirectoryContents, Inode, Item, RequestActionType, ResponseActionType,
+    BUHAO_SOCK_PATH,
 };
 use serde_json::json;
 
@@ -13,15 +14,17 @@ thread_local! {
     pub static MANAGER: RefCell<Manager> = RefCell::new(Manager::default());
 }
 
-pub struct HookDir {
+#[derive(Debug)]
+struct ShadowFd {
     path: String,
-    contents: DirectoryContents,
+    real_fd: Option<i32>,
+    info: Inode,
 }
 
 pub struct Manager {
     framed: SyncFramed<UnixStream, BuhaoCodec, Item>,
-    allocated_dir: HashSet<u64>,
-    dir_map: HashMap<u64, HookDir>,
+    fd_map: HashMap<i32, ShadowFd>,
+    next_fd: i32,
 }
 
 impl Default for Manager {
@@ -30,8 +33,8 @@ impl Default for Manager {
         let codec = BuhaoCodec;
         Self {
             framed: SyncFramed::new(stream, codec),
-            allocated_dir: HashSet::new(),
-            dir_map: HashMap::new(),
+            fd_map: HashMap::new(),
+            next_fd: -1,
         }
     }
 }
@@ -60,23 +63,15 @@ impl Manager {
     pub fn get(&mut self, path: &str) -> Result<Inode> {
         check_managed!(self, path);
         let item = (RequestActionType::Get.into(), json!({"path": path}));
-        Ok(serde_json::from_value(self.interact(item).1)?)
+        let resp = self.interact(item);
+        if resp.0 == <ResponseActionType as Into<u8>>::into(ResponseActionType::Ok) {
+            Ok(serde_json::from_value(resp.1)?)
+        } else {
+            Err(anyhow::anyhow!("{}", resp.1))
+        }
     }
 
-    // pub fn opendir(&mut self, path: &str) -> Result<Item> {
-    //     check_managed!(self, path);
-    //     let item = (RequestActionType::Get.into(), json!({"path": path}));
-    //     let item = self.interact(item);
-    //     if item.0 == ResponseActionType::Ok {
-    //         let dir_id = item.1["dir_id"].as_u64().unwrap();
-    //         self.allocated_dir.insert(dir_id);
-    //         // WIP
-    //         // self.dir_map.insert(dir_id, HookDir {
-    //         //     path: path.to_string(),
-    //         //     contents: serde_json::from_value(item.1["contents"].clone()).unwrap()
-    //         // });
-    //     }
-
-    //     unimplemented!()
-    // }
+    pub fn open(&mut self, path: &str) -> Result<i32> {
+        unimplemented!()
+    }
 }
