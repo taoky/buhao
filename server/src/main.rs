@@ -23,7 +23,9 @@ async fn main() {
     // unlink before bind if possible
     std::fs::remove_file(BUHAO_SOCK_PATH).unwrap_or(());
     let listener = UnixListener::bind(BUHAO_SOCK_PATH).unwrap();
-    let filesystem = Arc::new(Mutex::new(Filesystem::load_from_fs(Path::new("/tmp/buhao/"))));
+    let filesystem = Arc::new(Mutex::new(Filesystem::load_from_fs(Path::new(
+        "/tmp/buhao/",
+    ))));
 
     loop {
         match listener.accept().await {

@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
+use buhao_lib::InodeType;
 use log::warn;
 use std::path::Component;
 use std::{
@@ -140,6 +141,11 @@ pub fn dfs_list(filesystem: &mut Filesystem, dir: &Path) -> Result<Vec<Directory
         items.push(DirectoryItem {
             name: path.file_name().as_os_str().to_string_lossy().to_string(),
             inode: id,
+            itype: match contents {
+                Contents::File => InodeType::File,
+                Contents::Directory(_) => InodeType::Directory,
+                Contents::Symlink(_) => InodeType::Symlink,
+            },
         });
         filesystem.update(Inode::new(metadata, contents));
     }

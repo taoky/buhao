@@ -1,5 +1,6 @@
 use tokio_util::bytes::BytesMut;
 
+#[derive(Debug)]
 pub struct SyncFramed<T, U, EncoderItem> {
     inner: T,
     codec: U,

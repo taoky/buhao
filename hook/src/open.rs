@@ -1,11 +1,10 @@
 /// Open files and directories.
-use crate::utils::get_path;
+use crate::get_path;
 use anyhow::Result;
 use log::{info, warn};
 use redhook::hook;
 use std::ffi::c_char;
 
-// TODO
 fn open_hook(ptr: *const c_char, oflag: i32, mode: u32) -> Result<i32> {
     let path = match get_path(ptr) {
         Ok(s) => s,
@@ -14,9 +13,10 @@ fn open_hook(ptr: *const c_char, oflag: i32, mode: u32) -> Result<i32> {
             return Err(e);
         }
     };
-    info!("open (stub): {}, {}, {}", path, oflag, mode);
-    info!("{:?}", get!(path.as_str()));
-    Ok(unsafe { redhook::real!(open)(ptr, oflag, mode) })
+    info!("open: {}, {}, {}", path, oflag, mode);
+    let fd = open!(path.as_str(), false)?;
+    info!("using fake fd: {}", fd);
+    Ok(fd as i32)
 }
 
 hook! {

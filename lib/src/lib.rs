@@ -16,9 +16,17 @@ pub type InodeId = u64;
 pub const INVALID_PARENT: InodeId = u64::MAX;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum InodeType {
+    File,
+    Directory,
+    Symlink,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DirectoryItem {
     pub name: String,
     pub inode: InodeId,
+    pub itype: InodeType,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -153,6 +161,7 @@ pub fn convert_response_tuple(t: (ResponseActionType, Value)) -> Item {
 
 /// Packet design for requests and responses (which works like <https://i3wm.org/docs/ipc.html>):
 /// "buhao"<json payload len (u32)><message type (u8)><json payload>
+#[derive(Debug)]
 pub struct BuhaoCodec;
 pub type Item = (u8, Value);
 

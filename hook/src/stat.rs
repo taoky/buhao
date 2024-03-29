@@ -5,7 +5,7 @@ use log::{info, warn};
 use redhook::hook;
 use std::ffi::c_char;
 
-use crate::utils::get_path;
+use crate::get_path;
 
 const RECURSIVE_LIMIT: usize = 10;
 
@@ -60,10 +60,7 @@ fn stat_hook(
     info!("stat: {} (lstat: {})", path, use_lstat);
     let resp: Inode = get!(path.as_str())?;
     info!("{:?}", resp);
-    let is_symlink = match resp.contents {
-        Contents::Symlink(_) => true,
-        _ => false,
-    };
+    let is_symlink = matches!(resp.contents, Contents::Symlink(_));
     if !use_lstat || !is_symlink {
         inode_to_stat!(resp, buf);
         Ok(0)
@@ -101,10 +98,7 @@ fn stat64_hook(
     info!("stat64: {} (lstat64: {})", path, use_lstat);
     let resp: Inode = get!(path.as_str())?;
     info!("{:?}", resp);
-    let is_symlink = match resp.contents {
-        Contents::Symlink(_) => true,
-        _ => false,
-    };
+    let is_symlink = matches!(resp.contents, Contents::Symlink(_));
     if !use_lstat || !is_symlink {
         inode_to_stat!(resp, buf);
         Ok(0)
