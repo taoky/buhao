@@ -153,6 +153,8 @@ impl Manager {
                             in("rsi") shadow.oflag as u64,
                             in("rdx") 0o644,
                             lateout("rax") real_fd,
+                            clobber_abi("system"),
+                            options(nostack)
                         );
                     }
                     if real_fd < 0 {
