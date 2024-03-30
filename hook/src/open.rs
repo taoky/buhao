@@ -14,7 +14,7 @@ fn open_hook(ptr: *const c_char, oflag: i32, mode: u32) -> Result<i32> {
         }
     };
     info!("open: {}, {}, {}", path, oflag, mode);
-    let fd = open!(path.as_str(), false)?;
+    let fd = open!(path.as_str(), oflag, false)?;
     info!("using fake fd: {}", fd);
     Ok(fd as i32)
 }

@@ -1,3 +1,4 @@
+use std::arch::asm;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::os::unix::net::UnixStream;
@@ -7,6 +8,7 @@ use buhao_lib::syncframed::SyncFramed;
 use buhao_lib::{
     BuhaoCodec, Contents, Inode, Item, RequestActionType, ResponseActionType, BUHAO_SOCK_PATH,
 };
+use log::warn;
 use serde_json::json;
 
 use crate::{LOWER_DIRFD_BOUND, LOWER_FD_BOUND};
@@ -18,7 +20,8 @@ thread_local! {
 #[derive(Debug, Clone)]
 pub struct ShadowFd {
     pub path: String,
-    real_fd: Option<i32>,
+    pub real_fd: Option<i32>,
+    oflag: i32,
     pub info: Inode,
 }
 
@@ -82,7 +85,7 @@ impl Manager {
         }
     }
 
-    pub fn open(&mut self, path: &str, dir_op: bool) -> Result<u64> {
+    pub fn open(&mut self, path: &str, oflag: i32, dir_op: bool) -> Result<u64> {
         let inode = self.get(path)?;
         if dir_op {
             if let Contents::Directory(_) = inode.contents {
@@ -95,6 +98,7 @@ impl Manager {
         let shadow_fd = ShadowFd {
             path: path.to_string(),
             real_fd: None,
+            oflag,
             info: inode,
         };
 
@@ -133,7 +137,35 @@ impl Manager {
         self.dir_state.insert(fd, state);
     }
 
-    pub fn retrieve_fd(&self, fd: u64) -> Option<&ShadowFd> {
-        self.fd_map.get(&fd)
+    pub fn retrieve_fd(&mut self, fd: u64, open_real: bool) -> Option<ShadowFd> {
+        let shadow = self.fd_map.get(&fd).cloned();
+        if open_real {
+            if let Some(ref shadow) = shadow {
+                if shadow.real_fd.is_none() {
+                    // open real fd
+                    let mut real_fd: i32;
+                    let name = std::ffi::CString::new(shadow.path.clone()).unwrap();
+                    unsafe {
+                        asm!(
+                            "syscall",
+                            in("rax") 2,
+                            in("rdi") name.as_ptr() as u64,
+                            in("rsi") shadow.oflag as u64,
+                            in("rdx") 0o644,
+                            lateout("rax") real_fd,
+                        );
+                    }
+                    if real_fd < 0 {
+                        warn!("open real fd failed: {}", real_fd);
+                        return None;
+                    }
+                    let mut shadow = shadow.clone();
+                    shadow.real_fd = Some(real_fd);
+                    self.fd_map.insert(fd, shadow.clone());
+                    return Some(shadow);
+                }
+            }
+        }
+        shadow
     }
 }

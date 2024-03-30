@@ -44,9 +44,9 @@ macro_rules! get {
 }
 
 macro_rules! open {
-    ($path: expr, $dirop: expr) => {{
+    ($path: expr, $oflag: expr, $dirop: expr) => {{
         let path = &$crate::construct_absoulte_path($path)?;
-        $crate::manager::MANAGER.with(|m| m.borrow_mut().open(path, $dirop))
+        $crate::manager::MANAGER.with(|m| m.borrow_mut().open(path, $oflag, $dirop))
     }};
 }
 
@@ -64,7 +64,13 @@ macro_rules! set_dirstate {
 
 macro_rules! retrieve_fd {
     ($fd: expr) => {
-        $crate::manager::MANAGER.with(|m| m.borrow().retrieve_fd($fd).cloned())
+        $crate::manager::MANAGER.with(|m| m.borrow_mut().retrieve_fd($fd, false))
+    };
+}
+
+macro_rules! retrieve_fd_and_open_real {
+    ($fd: expr) => {
+        $crate::manager::MANAGER.with(|m| m.borrow_mut().retrieve_fd($fd, true))
     };
 }
 
@@ -81,6 +87,7 @@ mod dir;
 mod manager;
 mod open;
 mod stat;
+mod read;
 
 #[cfg(test)]
 mod tests {

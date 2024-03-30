@@ -19,7 +19,7 @@ fn opendir_hook(dirptr: *const c_char) -> Result<*mut libc::DIR> {
         }
     };
     info!("opendir: {}", path);
-    let fd = open!(path.as_str(), true)?;
+    let fd = open!(path.as_str(), 0, true)?;
     info!("using fake libc::DIR: {}", fd);
     Ok(fd as *mut libc::DIR)
 }
