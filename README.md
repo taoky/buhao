@@ -33,7 +33,11 @@ Run testing hook:
 
 ```console
 $ cargo build --lib
+$ # rsync
 $ LD_PRELOAD=./target/debug/libbuhao_hook.so rsync --daemon --no-detach --config=assets/rsyncd-test.conf
+$ # nginx
+$ LD_PRELOAD=./target/debug/libbuhao_hook.so nginx -c $(pwd)/assets/nginx-test.conf
+$ # kill with nginx -s stop -c $(pwd)/assets/nginx-test.conf
 ```
 
 Debugging:
