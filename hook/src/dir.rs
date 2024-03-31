@@ -55,6 +55,7 @@ fn readdir_get_dirent(dirp: u64) -> Result<(DirectoryItem, i64)> {
         Some(dirent) => dirent,
         None => {
             info!("readdir: end of directory");
+            set_errno_code(0);
             return Err(anyhow::anyhow!("end of directory"));
         }
     };
