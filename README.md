@@ -5,6 +5,12 @@
 A naive user-space filesystem metadata caching framework.
 Designed as an alternative approach of [rsync-huai](https://github.com/tuna/rsync/blob/master/README-huai.md).
 
+## TODO
+
+- [ ] sqlite database for server
+- [ ] how can hook get updated metadata?
+- [ ] fuse client implementation
+
 ## Architecture
 
 Hook: A library that could be `LD_PRELOAD`ed to any (supported) program that needs to access filesystem metadata.
