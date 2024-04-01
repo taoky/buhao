@@ -153,10 +153,21 @@ hook! {
 }
 
 hook! {
-    // TODO: stub
     unsafe fn fstat64(fd: i32, buf: *mut libc::stat64) -> i32 => my_fstat64 {
-        info!("fstat64 (stub): {}", fd);
-        redhook::real!(fstat64)(fd, buf)
+        if fd < crate::LOWER_FD_BOUND {
+            return redhook::real!(fstat64)(fd, buf);
+        }
+        info!("fstat: {}", fd);
+        let info: ShadowFd = match retrieve_fd!(fd as u64) {
+            Some(info) => info,
+            None => {
+                warn!("fstat: invalid fd");
+                return -1;
+            }
+        };
+        let inode = info.info;
+        inode_to_stat!(inode, buf);
+        0
     }
 }
 
