@@ -1,5 +1,5 @@
 /// Open files and directories.
-use crate::get_path;
+use crate::{get_path, manager::ShadowFd};
 use anyhow::Result;
 use log::{info, warn};
 use redhook::hook;
@@ -67,7 +67,19 @@ hook! {
 
 hook! {
     unsafe fn close(fd: i32) -> i32 => my_close {
-        info!("close: {}", fd);
-        redhook::real!(close)(fd)
+        if fd < crate::LOWER_FD_BOUND {
+            return redhook::real!(close)(fd);
+        }
+        let fd = fd as u64;
+        let info: ShadowFd = match retrieve_fd!(fd) {
+            Some(info) => info,
+            None => {
+                warn!("close: invalid fd");
+                return -1;
+            }
+        };
+        info!("close: {:?}", info);
+        close!(fd, false);
+        0
     }
 }

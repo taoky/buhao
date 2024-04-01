@@ -15,6 +15,8 @@ pub const BUHAO_SOCK_PATH: &str = "/tmp/buhao.sock";
 pub type InodeId = u64;
 pub const INVALID_PARENT: InodeId = u64::MAX;
 
+pub const RECURSIVE_LIMIT: usize = 10;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum InodeType {
     File,

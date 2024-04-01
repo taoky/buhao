@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use anyhow::Result;
 use buhao_lib::InodeType;
+use buhao_lib::RECURSIVE_LIMIT;
 use log::warn;
 use std::path::Component;
 use std::{
@@ -67,6 +68,17 @@ impl Filesystem {
                     inode = self.inodes.get(&parent_id).unwrap();
                 }
                 Component::Normal(name) => {
+                    // handling symlink dir
+                    let mut redirection = 0;
+                    while let Contents::Symlink(ref target) = inode.contents {
+                        if redirection > RECURSIVE_LIMIT {
+                            return Err(anyhow!("Too many redirections"));
+                        }
+                        let target_path = Path::new(target);
+                        let target_inode = self.open(target_path)?;
+                        inode = target_inode;
+                        redirection += 1;
+                    }
                     let directory = match inode.contents {
                         Contents::Directory(ref contents) => contents,
                         _ => unreachable!(),

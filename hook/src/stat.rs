@@ -1,13 +1,13 @@
 use anyhow::Result;
-use buhao_lib::{Contents, Inode};
+use buhao_lib::{Contents, Inode, RECURSIVE_LIMIT};
 use libc::AT_FDCWD;
-use log::{info, warn};
+use log::{debug, info, warn};
 use redhook::hook;
 use std::ffi::c_char;
 
 use crate::{get_path, manager::ShadowFd};
 
-const RECURSIVE_LIMIT: usize = 10;
+
 
 macro_rules! inode_to_stat {
     ($inode: ident, $buf: ident) => {
@@ -61,7 +61,8 @@ fn stat_hook(
     let resp: Inode = get!(path.as_str())?;
     info!("{:?}", resp);
     let is_symlink = matches!(resp.contents, Contents::Symlink(_));
-    if !use_lstat || !is_symlink {
+    // Returns original inode if not symlink or not using lstat
+    if use_lstat || !is_symlink {
         inode_to_stat!(resp, buf);
         Ok(0)
     } else {
@@ -72,8 +73,9 @@ fn stat_hook(
                 unreachable!("stat_hook: invalid symlink logic");
             }
         };
+        debug!("Get a symlink: {}", new_path);
         let ptr = new_path.as_ptr() as *const c_char;
-        stat_hook(ptr, buf, false, recursive + 1)
+        stat_hook(ptr, buf, use_lstat, recursive + 1)
     }
 }
 
@@ -99,7 +101,7 @@ fn stat64_hook(
     let resp: Inode = get!(path.as_str())?;
     info!("{:?}", resp);
     let is_symlink = matches!(resp.contents, Contents::Symlink(_));
-    if !use_lstat || !is_symlink {
+    if use_lstat || !is_symlink {
         inode_to_stat!(resp, buf);
         Ok(0)
     } else {
@@ -111,7 +113,7 @@ fn stat64_hook(
             }
         };
         let ptr = new_path.as_ptr() as *const c_char;
-        stat64_hook(ptr, buf, false, recursive + 1)
+        stat64_hook(ptr, buf, use_lstat, recursive + 1)
     }
 }
 
