@@ -15,6 +15,7 @@ buhao_lib = { path = "../lib" }
 tokio-stream = { workspace = true }
 futures = { workspace = true }
 serde_json = { workspace = true }
+rusqlite = { version = "0.31.0", features = ["bundled"] }
 
 [dev-dependencies]
 test-log = "0.2.11"

@@ -16,6 +16,8 @@ use tokio_stream::StreamExt;
 mod fs;
 use fs::Filesystem;
 
+mod hashmapshim;
+
 #[tokio::main]
 async fn main() {
     // init logger
