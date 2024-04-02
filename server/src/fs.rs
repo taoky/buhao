@@ -5,24 +5,28 @@ use buhao_lib::RECURSIVE_LIMIT;
 use log::warn;
 use std::path::Component;
 use std::{
-    collections::HashMap,
     os::unix::prelude::MetadataExt,
     path::{Path, PathBuf},
 };
 
 use buhao_lib::{Contents, DirectoryContents, DirectoryItem, Inode, InodeId, INVALID_PARENT};
 
+use crate::hashmapshim::HashMapShim;
+use crate::hashmapshim::StdHashMap;
+
 pub struct Filesystem {
     root_path: PathBuf,
     root: InodeId,
-    inodes: HashMap<InodeId, Inode>,
+    // inodes: HashMap<InodeId, Inode>,
+    inodes: Box<dyn HashMapShim<InodeId, Inode>>,
 }
 
 impl Filesystem {
-    pub fn load_from_fs(root_path: &Path) -> Self {
+    pub fn new_from_fs(root_path: &Path) -> Self {
         let root_metadata = std::fs::metadata(root_path).unwrap();
         let root = root_metadata.ino();
-        let inodes = HashMap::new();
+        // let inodes = HashMap::new();
+        let inodes = Box::new(StdHashMap::new());
         let mut fs = Self {
             root_path: root_path.to_path_buf(),
             root,
@@ -43,7 +47,7 @@ impl Filesystem {
         self.inodes.insert(inode.id, inode);
     }
 
-    pub fn open(&self, path: &Path) -> Result<&Inode> {
+    pub fn open(&self, path: &Path) -> Result<Inode> {
         // invariant: inode is always a directory until the end of the loop
         let mut inode = self.inodes.get(&self.root).unwrap();
         let relative = if path.is_absolute() {
@@ -190,7 +194,7 @@ mod test {
 
     #[test]
     fn test_open() {
-        let filesystem = Filesystem::load_from_fs(Path::new("/tmp/buhao"));
+        let filesystem = Filesystem::new_from_fs(Path::new("/tmp/buhao"));
         println!(
             "root path: {:?}, root: {}",
             filesystem.root_path, filesystem.root
