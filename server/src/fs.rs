@@ -15,6 +15,7 @@ use crate::hashmapshim::HashMapShim;
 use crate::hashmapshim::SqliteHashMap;
 use crate::hashmapshim::StdHashMap;
 
+#[derive(Debug)]
 pub struct Filesystem {
     root_path: PathBuf,
     root: InodeId,
@@ -48,12 +49,14 @@ impl Filesystem {
     pub fn new_from_sqlite(root_path: &Path, db_path: &Path) -> Self {
         let root_metadata = std::fs::metadata(root_path).unwrap();
         let root = root_metadata.ino();
-        let inodes = Box::new(SqliteHashMap::new(db_path).unwrap());
+        let mut inodes = Box::new(SqliteHashMap::new(db_path).unwrap());
         // does it have root inode?
         let should_init = inodes.get(&root).is_none();
         if should_init {
             inodes.drop_().unwrap();
             inodes.create().unwrap();
+        } else {
+            inodes.init_by_root(root);
         }
         let mut fs = Self {
             root_path: root_path.to_path_buf(),
