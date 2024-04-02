@@ -12,6 +12,7 @@ use std::{
 use buhao_lib::{Contents, DirectoryContents, DirectoryItem, Inode, InodeId, INVALID_PARENT};
 
 use crate::hashmapshim::HashMapShim;
+use crate::hashmapshim::SqliteHashMap;
 use crate::hashmapshim::StdHashMap;
 
 pub struct Filesystem {
@@ -22,6 +23,7 @@ pub struct Filesystem {
 }
 
 impl Filesystem {
+    #[allow(dead_code)]
     pub fn new_from_fs(root_path: &Path) -> Self {
         let root_metadata = std::fs::metadata(root_path).unwrap();
         let root = root_metadata.ino();
@@ -40,6 +42,34 @@ impl Filesystem {
                 children: root_files,
             }),
         ));
+        fs
+    }
+
+    pub fn new_from_sqlite(root_path: &Path, db_path: &Path) -> Self {
+        let root_metadata = std::fs::metadata(root_path).unwrap();
+        let root = root_metadata.ino();
+        let inodes = Box::new(SqliteHashMap::new(db_path).unwrap());
+        // does it have root inode?
+        let should_init = inodes.get(&root).is_none();
+        if should_init {
+            inodes.drop_().unwrap();
+            inodes.create().unwrap();
+        }
+        let mut fs = Self {
+            root_path: root_path.to_path_buf(),
+            root,
+            inodes,
+        };
+        if should_init {
+            let root_files = dfs_list(&mut fs, root_path).unwrap();
+            fs.update(Inode::new(
+                root_metadata,
+                Contents::Directory(DirectoryContents {
+                    parent: INVALID_PARENT,
+                    children: root_files,
+                }),
+            ));
+        }
         fs
     }
 

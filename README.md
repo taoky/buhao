@@ -7,7 +7,8 @@ Designed as an alternative approach of [rsync-huai](https://github.com/tuna/rsyn
 
 ## TODO
 
-- [ ] sqlite database for server
+- [x] sqlite database for server
+- [ ] refresh support
 - [ ] how can hook get updated metadata?
 - [ ] fuse client implementation
 

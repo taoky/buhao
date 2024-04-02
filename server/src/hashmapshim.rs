@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use buhao_lib::InodeId;
 
 /// A shim over std hashmap or sqlite3
@@ -39,6 +41,7 @@ impl<K, V> StdHashMap<K, V>
 where
     K: std::hash::Hash + Eq,
 {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             map: std::collections::HashMap::new(),
@@ -48,15 +51,14 @@ where
 
 #[derive(Debug)]
 pub struct SqliteHashMap<K, V> {
-    conn: rusqlite::Connection,
+    pub conn: rusqlite::Connection,
     key_type: std::marker::PhantomData<K>,
     value_type: std::marker::PhantomData<V>,
 }
 
 impl<V> SqliteHashMap<InodeId, V> {
-    pub fn new(path: &str) -> rusqlite::Result<Self> {
-        let conn = rusqlite::Connection::open(path)?;
-        conn.execute(
+    pub fn create(&self) -> rusqlite::Result<()> {
+        self.conn.execute(
             "CREATE TABLE IF NOT EXISTS inodemap (
                 key INT PRIMARY KEY,
                 value TEXT,
@@ -64,15 +66,27 @@ impl<V> SqliteHashMap<InodeId, V> {
             )",
             (),
         )?;
-        conn.execute(
+        self.conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_epoch on inodemap(epoch)",
             (),
         )?;
-        Ok(Self {
+        Ok(())
+    }
+
+    pub fn drop_(&self) -> rusqlite::Result<()> {
+        self.conn.execute("DROP TABLE IF EXISTS inodemap", ())?;
+        Ok(())
+    }
+
+    pub fn new(path: &Path) -> rusqlite::Result<Self> {
+        let conn = rusqlite::Connection::open(path)?;
+        let obj = Self {
             conn,
             key_type: std::marker::PhantomData,
             value_type: std::marker::PhantomData,
-        })
+        };
+        obj.create()?;
+        Ok(obj)
     }
 }
 
@@ -112,13 +126,9 @@ where
     }
 
     fn values(&self) -> Vec<V> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT value FROM inodemap")
-            .unwrap();
+        let mut stmt = self.conn.prepare("SELECT value FROM inodemap").unwrap();
         let rows = stmt.query_map([], |row| row.get(0)).unwrap();
-        rows
-            .map(|row| row.unwrap())
+        rows.map(|row| row.unwrap())
             .map(|value: String| serde_json::from_str(&value).unwrap())
             .collect()
     }
